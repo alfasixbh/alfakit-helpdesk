@@ -1,0 +1,93 @@
+{
+  "name": "alfasix/alfakit-helpdesk",
+  "description": "A helpdesk inside AlfaKit panels: tickets with SLAs on business hours, a threaded conversation with internal notes, canned replies, an agent inbox with keyboard shortcuts, a customer portal, a contact form, an embeddable live chat widget and reports, real time when the panel is.",
+  "keywords": [
+    "laravel",
+    "alfakit",
+    "helpdesk",
+    "support",
+    "tickets",
+    "live-chat",
+    "sla"
+  ],
+  "homepage": "https://alfakit.dev/docs/plugins/helpdesk",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Alfa Six",
+      "homepage": "https://alfasixbh.com",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/alfasixbh/alfakit/issues",
+    "source": "https://github.com/alfasixbh/alfakit"
+  },
+  "require": {
+    "php": "^8.3",
+    "alfasix/alfakit": "^0.1|@dev"
+  },
+  "suggest": {
+    "alfasix/alfakit-tags": "Tag tickets with spatie/laravel-tags (the ticket model must use Spatie\\Tags\\HasTags).",
+    "laravel/reverb": "Real-time inbox, typing indicators and presence through Panel::realtime()."
+  },
+  "autoload": {
+    "psr-4": {
+      "AlfaSix\\AlfakitHelpdesk\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "AlfaSix\\AlfakitHelpdesk\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "AlfaSix\\AlfakitHelpdesk\\AlfakitHelpdeskServiceProvider"
+      ]
+    },
+    "alfakit": {
+      "version": "^0.1",
+      "frontend": null,
+      "showcase": {
+        "demoPath": "helpdesk/inbox",
+        "tour": [
+          "Open Support > Inbox",
+          "Answer a ticket with a canned reply",
+          "Add an internal note",
+          "Watch the SLA timer"
+        ],
+        "clips": [
+          "react-light",
+          "react-dark",
+          "vue-light",
+          "vue-dark",
+          "svelte-light",
+          "svelte-dark"
+        ],
+        "worksWith": [
+          "comments",
+          "ai",
+          "forms",
+          "tags"
+        ],
+        "highlights": [
+          "Tickets with SLAs on business hours",
+          "Threaded conversation with internal notes",
+          "Canned replies",
+          "Agent inbox with keyboard shortcuts",
+          "Customer portal and contact form",
+          "Embeddable live chat widget",
+          "Reports"
+        ]
+      }
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

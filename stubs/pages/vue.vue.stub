@@ -1,0 +1,64 @@
+<script setup lang="ts">
+import { AlfakitComponent, type StandaloneComponentSchema } from '@alfakit/vue'
+import { Head, Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+
+/**
+ * The AlfaKit helpdesk's customer pages (portal, ticket, contact form, satisfaction
+ * survey), served under /support. Every block is a server-driven AlfaKit component.
+ */
+const props = defineProps<{
+    components: StandaloneComponentSchema[]
+    meta: {
+        view: 'index' | 'create' | 'show' | 'contact' | 'rate'
+        title: string
+        appName: string
+        signedIn: boolean
+        poweredBy?: string | null
+        links: { portal?: string; newTicket?: string; contact?: string }
+        labels: { portal: string; newTicket: string; contact: string; navigation: string }
+    }
+}>()
+
+const links = computed(() =>
+    [
+        props.meta.signedIn && props.meta.links.portal ? { href: props.meta.links.portal, label: props.meta.labels.portal, current: props.meta.view === 'index' } : null,
+        props.meta.signedIn && props.meta.links.newTicket ? { href: props.meta.links.newTicket, label: props.meta.labels.newTicket, current: props.meta.view === 'create' } : null,
+        props.meta.links.contact ? { href: props.meta.links.contact, label: props.meta.labels.contact, current: props.meta.view === 'contact' } : null,
+    ].filter((link) => link !== null),
+)
+</script>
+
+<template>
+    <Head :title="meta.title">
+        <meta name="robots" content="noindex" />
+    </Head>
+    <div class="min-h-svh bg-muted/40">
+        <header class="border-b bg-background">
+            <div class="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <span class="font-semibold">{{ meta.appName }}</span>
+                <nav v-if="links.length > 0" :aria-label="meta.labels.navigation" class="flex flex-wrap gap-1 text-sm">
+                    <Link
+                        v-for="link in links"
+                        :key="link.href"
+                        :href="link.href"
+                        :aria-current="link.current ? 'page' : undefined"
+                        class="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground aria-[current=page]:bg-muted aria-[current=page]:text-foreground"
+                    >
+                        {{ link.label }}
+                    </Link>
+                </nav>
+            </div>
+        </header>
+        <main class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+            <AlfakitComponent
+                v-for="(component, index) in components"
+                :key="`${meta.view}-${index}`"
+                :component="component"
+                class="rounded-xl border bg-background p-5 shadow-sm sm:p-8"
+            />
+        </main>
+        <!-- "Powered by AlfaKit · Alfa Six", only when HelpdeskPlugin::poweredBy() is on. -->
+        <div v-if="meta.poweredBy" class="pb-6" v-html="meta.poweredBy" />
+    </div>
+</template>

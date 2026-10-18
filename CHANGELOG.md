@@ -1,0 +1,7 @@
+# Changelog
+
+All notable changes to `alfasix/alfakit-helpdesk` are documented in this file.
+
+## Unreleased
+
+- Initial release: tickets (requester or guest email, status, priority, type, channel, tags or spatie/laravel-tags, assignee, groups) with a publishable migration; SLA policies on business hours (holidays, breaks, calendar hours) with first response and resolution targets, a paused clock while pending, due-soon and breached views and the `alfakit-helpdesk:sla` command; the ticket page (conversation with internal notes, reply with canned replies and attachments, assign, status, merge, solve) and bulk assign / close; the agent inbox page (`helpdesk:inbox` in React, Vue and Svelte) with views, search, a quick composer, `j` / `k` / `r` / `n` / `/` shortcuts, live updates, typing and presence with `realtime()` and polling otherwise; canned replies with safe placeholders; groups; the reports widget (created, solved, median first response, SLA compliance, CSAT); the customer portal, signed guest links, satisfaction survey and contact form (honeypot, time check, rate limit) as standalone components; the `HelpdeskChat` live chat widget with signed guest tokens; queued Mailables; the inbound mail webhook with `InboundMailVerifier` / `InboundMailParser` contracts; `TicketCreated`, `ReplyAdded`, `TicketSolved`, `TicketAssigned`, `TicketsMerged`, `TicketRated` and `SlaBreached` events; key-only `TicketActivity` broadcasts; tenant isolation and default policies.

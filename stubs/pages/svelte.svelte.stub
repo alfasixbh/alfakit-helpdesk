@@ -1,0 +1,65 @@
+<script lang="ts">
+    import { AlfakitComponent, type StandaloneComponentSchema } from '@alfakit/svelte'
+    import { Link } from '@inertiajs/svelte'
+
+    /**
+     * The AlfaKit helpdesk's customer pages (portal, ticket, contact form, satisfaction
+     * survey), served under /support. Every block is a server-driven AlfaKit component.
+     */
+    let {
+        components,
+        meta,
+    }: {
+        components: StandaloneComponentSchema[]
+        meta: {
+            view: 'index' | 'create' | 'show' | 'contact' | 'rate'
+            title: string
+            appName: string
+            signedIn: boolean
+            poweredBy?: string | null
+            links: { portal?: string; newTicket?: string; contact?: string }
+            labels: { portal: string; newTicket: string; contact: string; navigation: string }
+        }
+    } = $props()
+
+    const links = $derived(
+        [
+            meta.signedIn && meta.links.portal ? { href: meta.links.portal, label: meta.labels.portal, current: meta.view === 'index' } : null,
+            meta.signedIn && meta.links.newTicket ? { href: meta.links.newTicket, label: meta.labels.newTicket, current: meta.view === 'create' } : null,
+            meta.links.contact ? { href: meta.links.contact, label: meta.labels.contact, current: meta.view === 'contact' } : null,
+        ].filter((link) => link !== null),
+    )
+</script>
+
+<svelte:head>
+    <title>{meta.title}</title>
+    <meta name="robots" content="noindex" />
+</svelte:head>
+
+<div class="min-h-svh bg-muted/40">
+    <header class="border-b bg-background">
+        <div class="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <span class="font-semibold">{meta.appName}</span>
+            {#if links.length > 0}
+                <nav aria-label={meta.labels.navigation} class="flex flex-wrap gap-1 text-sm">
+                    {#each links as link (link.href)}
+                        <Link
+                            href={link.href}
+                            aria-current={link.current ? 'page' : undefined}
+                            class="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground aria-[current=page]:bg-muted aria-[current=page]:text-foreground"
+                        >
+                            {link.label}
+                        </Link>
+                    {/each}
+                </nav>
+            {/if}
+        </div>
+    </header>
+    <main class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+        {#each components as component, index (`${meta.view}-${index}`)}
+            <AlfakitComponent {component} class="rounded-xl border bg-background p-5 shadow-sm sm:p-8" />
+        {/each}
+    </main>
+    <!-- "Powered by AlfaKit · Alfa Six", only when HelpdeskPlugin::poweredBy() is on. -->
+    {#if meta.poweredBy}<div class="pb-6">{@html meta.poweredBy}</div>{/if}
+</div>
