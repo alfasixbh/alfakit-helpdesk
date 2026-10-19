@@ -1,5 +1,6 @@
 import { AlfakitComponent, type StandaloneComponentSchema } from '@alfakit/react'
 import { Head, Link } from '@inertiajs/react'
+import type { ReactNode } from 'react'
 
 interface HelpdeskPortalProps {
     components: StandaloneComponentSchema[]
@@ -65,3 +66,10 @@ export default function HelpdeskPortal({ components, meta }: HelpdeskPortalProps
         </>
     )
 }
+
+/**
+ * Customer pages: render them without the app's default Inertia layout (a starter kit's
+ * AppLayout and its sidebar). To use the default layout instead, delete this line; to
+ * use another layout, wrap the page: `(page: ReactNode) => <PublicLayout>{page}</PublicLayout>`.
+ */
+HelpdeskPortal.layout = (page: ReactNode) => <>{page}</>

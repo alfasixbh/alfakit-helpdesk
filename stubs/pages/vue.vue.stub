@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { AlfakitComponent, type StandaloneComponentSchema } from '@alfakit/vue'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, type VNode } from 'vue'
+
+/**
+ * Customer pages: render them without the app's default Inertia layout (a starter kit's
+ * AppLayout and its sidebar). To use the default layout instead, delete this
+ * `defineOptions()`; to use another layout, set `layout: PublicLayout`.
+ */
+defineOptions({ layout: (_h: unknown, page: unknown) => page as VNode })
 
 /**
  * The AlfaKit helpdesk's customer pages (portal, ticket, contact form, satisfaction

@@ -1,3 +1,12 @@
+<script module lang="ts">
+    /**
+     * Customer pages: render them without the app's default Inertia layout (a starter kit's
+     * AppLayout and its sidebar). To use the default layout instead, delete this export;
+     * to use another layout, `export const layout = PublicLayout`.
+     */
+    export const layout = (_h: unknown, page: unknown) => page
+</script>
+
 <script lang="ts">
     import { AlfakitComponent, type StandaloneComponentSchema } from '@alfakit/svelte'
     import { Link } from '@inertiajs/svelte'
