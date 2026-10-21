@@ -34,7 +34,9 @@ final class SpamGuard
             ->extraFieldWrapperAttributes([
                 'aria-hidden' => 'true',
                 'data-helpdesk-honeypot' => 'true',
-                'style' => 'position:absolute;inset-inline-start:-10000px;width:1px;height:1px;overflow:hidden',
+                // Clipped in place: pushed 10000px towards the start it widened right-to-left
+                // pages by 10000px (a horizontal scrollbar on every Arabic form).
+                'style' => 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0',
             ])
             ->extraInputAttributes(['tabindex' => '-1']);
     }

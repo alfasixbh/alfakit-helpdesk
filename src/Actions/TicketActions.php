@@ -211,16 +211,22 @@ final class TicketActions
                 'priority' => $record->priority,
                 'type' => $record->type,
                 'labels' => $record->labels ?? [],
+                ...(HelpdeskPlugin::get()->usesSpatieTags() && method_exists($record, 'tagsWithType')
+                    ? ['tags' => $record->tagsWithType('helpdesk')->pluck('name')->map(static fn (mixed $name): string => (string) $name)->values()->all()]
+                    : []),
             ] : [])
             ->schema(static fn (): array => [
                 TextInput::make('subject')->label(__('alfakit-helpdesk::helpdesk.fields.subject'))->required()->maxLength(255),
                 Select::make('priority')->label(__('alfakit-helpdesk::helpdesk.fields.priority'))->options(TicketPriority::options())->required()->selectablePlaceholder(false),
                 Select::make('type')->label(__('alfakit-helpdesk::helpdesk.fields.type'))->options(TicketType::options())->required()->selectablePlaceholder(false),
-                ...(HelpdeskPlugin::get()->usesSpatieTags() ? [] : [
+                ...(HelpdeskPlugin::get()->usesSpatieTags() ? [
+                    // With spatie/laravel-tags the tags live in `taggables` (type `helpdesk`), as in the resource form.
+                    \AlfaSix\AlfakitTags\Forms\Components\SpatieTagsInput::make('tags')->type('helpdesk')->label(__('alfakit-helpdesk::helpdesk.fields.tags')),
+                ] : [
                     TagsInput::make('labels')->label(__('alfakit-helpdesk::helpdesk.fields.tags'))->nestedRecursiveRules(['string', 'max:50'])->rule('max:20'),
                 ]),
             ])
-            ->action(static function (array $data, ?Model $record): void {
+            ->action(static function (array $data, ?Model $record, Action $action): void {
                 $changes = [
                     'subject' => (string) ($data['subject'] ?? ''),
                     'priority' => (string) ($data['priority'] ?? ''),
@@ -232,6 +238,10 @@ final class TicketActions
                 }
 
                 Tickets::update(self::ticket($record), $changes, self::agent());
+
+                if (HelpdeskPlugin::get()->usesSpatieTags()) {
+                    $action->getForm()?->saveRelationships();
+                }
 
                 Notification::make()->success()->title(__('alfakit-helpdesk::helpdesk.notifications.updated'))->send();
             });

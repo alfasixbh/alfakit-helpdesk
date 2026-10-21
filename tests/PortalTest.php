@@ -169,6 +169,14 @@ it('opens a guest\'s ticket from a signed link only', function (): void {
     expect($ticket->publicMessages()->count())->toBe(2);
 });
 
+it('hides the contact form honeypot without widening right-to-left pages', function (): void {
+    $form = portalComponents('/support/contact')[0];
+    $style = (string) (collect(iterator_to_array(new RecursiveIteratorIterator(new RecursiveArrayIterator($form))))->first(fn (mixed $value, string|int $key): bool => $key === 'style' && is_string($value) && str_contains($value, 'position:absolute')) ?? '');
+
+    // Pushed 10000px towards the start, it gave Arabic pages a 10000px horizontal scroll.
+    expect($style)->toContain('clip-path:inset(50%)')->not->toContain('-10000px');
+});
+
 it('creates tickets for guests from the contact form', function (): void {
     $form = portalComponents('/support/contact')[0];
 
