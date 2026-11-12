@@ -1,7 +1,7 @@
 <x-mail::message>
 # {{ $isNew ? __('alfakit-helpdesk::helpdesk.mail.agent.new_heading', ['reference' => $ticket->getReference()]) : __('alfakit-helpdesk::helpdesk.mail.agent.reply_heading', ['name' => $requester]) }}
 
-**{{ $ticket->subject }}** · {{ $ticket->getPriority()->getLabel() }}
+**{{ $subject ?? \AlfaSix\AlfakitHelpdesk\Support\MessageBody::escapeMarkdown($ticket->subject) }}** · {{ $ticket->getPriority()->getLabel() }}
 
 @if ($body)
 <x-mail::panel>

@@ -6,7 +6,6 @@ namespace AlfaSix\AlfakitHelpdesk\Resources\TicketResource\Pages;
 
 use AlfaSix\Alfakit\Resources\Pages\CreateRecord;
 use AlfaSix\AlfakitHelpdesk\Actions\TicketActions;
-use AlfaSix\AlfakitHelpdesk\AlfakitHelpdesk;
 use AlfaSix\AlfakitHelpdesk\Enums\TicketChannel;
 use AlfaSix\AlfakitHelpdesk\HelpdeskPlugin;
 use AlfaSix\AlfakitHelpdesk\Resources\TicketResource;
@@ -30,10 +29,9 @@ class CreateTicket extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         $requester = null;
-        $model = AlfakitHelpdesk::userModel($this->getPanel()->getAuthGuard());
 
-        if (filled($data['requester_id'] ?? null) && $model !== null) {
-            $requester = $model::query()->whereKey($data['requester_id'])->first();
+        if (filled($data['requester_id'] ?? null)) {
+            $requester = static::getResource()::findRequester($data['requester_id']);
 
             if (! $requester instanceof Model) {
                 throw ValidationException::withMessages(['data.requester_id' => __('validation.exists', ['attribute' => __('alfakit-helpdesk::helpdesk.fields.requester')])]);

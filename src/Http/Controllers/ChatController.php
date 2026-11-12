@@ -14,6 +14,8 @@ use AlfaSix\AlfakitHelpdesk\Support\MessageBody;
 use AlfaSix\AlfakitHelpdesk\Support\SpamGuard;
 use AlfaSix\AlfakitHelpdesk\Support\Tickets;
 use AlfaSix\AlfakitHelpdesk\Support\Typing;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -151,10 +153,13 @@ class ChatController
 
         if ($customer !== null) {
             $model = AlfakitHelpdesk::ticketModel();
+            $tenant = AlfakitHelpdesk::plugin()->getPublicTenant($request);
             $ticket = $model::query()
                 ->where('channel', TicketChannel::Chat->value)
                 ->whereNull('merged_into_id')
                 ->requestedBy($customer)
+                // A site of one tenant shows only the chat the customer had with that tenant.
+                ->when($tenant instanceof Model, static fn (Builder $query) => $query->where('tenant_type', $tenant->getMorphClass())->where('tenant_id', $tenant->getKey()))
                 ->latest('last_activity_at')
                 ->first();
 

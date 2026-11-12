@@ -49,8 +49,8 @@ final class SlaClock
 
         for ($i = 0; $i < self::MAX_DAYS; $i++) {
             foreach ($this->hours->intervalsOn($day) as [$from, $to]) {
-                $intervalStart = $day->addMinutes($from);
-                $intervalEnd = $day->addMinutes($to);
+                $intervalStart = self::wallTime($day, $from);
+                $intervalEnd = self::wallTime($day, $to);
 
                 if ($intervalEnd <= $local) {
                     continue;
@@ -98,8 +98,8 @@ final class SlaClock
 
         for ($i = 0; $i < self::MAX_DAYS && $day < $end; $i++) {
             foreach ($this->hours->intervalsOn($day) as [$from, $to]) {
-                $intervalStart = $day->addMinutes($from);
-                $intervalEnd = $day->addMinutes($to);
+                $intervalStart = self::wallTime($day, $from);
+                $intervalEnd = self::wallTime($day, $to);
                 $a = $intervalStart > $start ? $intervalStart : $start;
                 $b = $intervalEnd < $end ? $intervalEnd : $end;
 
@@ -112,5 +112,17 @@ final class SlaClock
         }
 
         return $total;
+    }
+
+    /**
+     * `$minutes` after midnight on the clock of `$day` (09:00 is 540). Not `addMinutes()`:
+     * on the day daylight saving starts or ends that is an hour off, since the day is 23
+     * or 25 hours long.
+     */
+    private static function wallTime(CarbonImmutable $day, int $minutes): CarbonImmutable
+    {
+        return $minutes >= 1440
+            ? $day->addDay()->setTime(0, 0)
+            : $day->setTime(intdiv($minutes, 60), $minutes % 60);
     }
 }

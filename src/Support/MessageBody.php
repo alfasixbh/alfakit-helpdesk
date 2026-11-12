@@ -67,6 +67,15 @@ final class MessageBody
         return trim((string) preg_replace("/\n{3,}/", "\n\n", $text));
     }
 
+    /**
+     * Plain text for a Markdown mail: what people wrote stays text, so a message cannot
+     * add a link, an image or a heading to the mail an agent reads.
+     */
+    public static function escapeMarkdown(?string $text): string
+    {
+        return (string) preg_replace('/[\\\\`*_\[\]!#|]/', '\\\\$0', (string) $text);
+    }
+
     public static function excerpt(string $html, int $limit = 140): string
     {
         return Str::limit(self::toText($html), $limit);

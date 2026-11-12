@@ -68,6 +68,8 @@ class HelpdeskPlugin implements Plugin
 
     protected ?Closure $agentsUsing = null;
 
+    protected ?Closure $requestersUsing = null;
+
     protected ?BusinessHours $businessHours = null;
 
     /** @var array<int, SlaPolicy> */
@@ -368,6 +370,33 @@ class HelpdeskPlugin implements Plugin
         }
 
         $query = $this->evaluate($this->agentsUsing, ['tenant' => $tenant], $tenant === null ? [] : [Model::class => $tenant]);
+
+        return $query instanceof Builder ? $query : null;
+    }
+
+    /**
+     * The users an agent may pick as a ticket's requester:
+     * `fn (?Model $tenant): Builder => Customer::query()->whereBelongsTo($tenant)`.
+     * By default every user, and on tenancy panels the tenant's members plus the people
+     * who already have a ticket with that tenant.
+     */
+    public function requesters(?Closure $callback): static
+    {
+        $this->requestersUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @return Builder<Model>|null
+     */
+    public function getRequestersQuery(?Model $tenant): ?Builder
+    {
+        if ($this->requestersUsing === null) {
+            return null;
+        }
+
+        $query = $this->evaluate($this->requestersUsing, ['tenant' => $tenant], $tenant === null ? [] : [Model::class => $tenant]);
 
         return $query instanceof Builder ? $query : null;
     }

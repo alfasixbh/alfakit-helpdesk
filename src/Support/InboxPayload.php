@@ -46,7 +46,7 @@ final class InboxPayload
             ], static fn (mixed $value): bool => $value !== null);
         }
 
-        $tickets = Views::apply(clone $query, $view, $agent)->with(['assignee', 'requester']);
+        $tickets = Views::apply(clone $query, $view, $agent)->with(['assignee', 'requester', 'latestMessage']);
 
         if ($search !== '') {
             $like = '%'.mb_strtolower($search).'%';
@@ -88,7 +88,9 @@ final class InboxPayload
      */
     public static function listItem(Ticket $ticket): array
     {
-        $last = $ticket->messages()->reorder()->where('kind', '!=', MessageKind::Event->value)->latest('created_at')->latest('id')->first();
+        $last = $ticket->relationLoaded('latestMessage')
+            ? $ticket->getRelation('latestMessage')
+            : $ticket->messages()->reorder()->where('kind', '!=', MessageKind::Event->value)->latest('created_at')->latest('id')->first();
         $summary = Sla::summary($ticket);
 
         return array_filter([

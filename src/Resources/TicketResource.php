@@ -15,6 +15,7 @@ use AlfaSix\Alfakit\Schemas\Components\Grid;
 use AlfaSix\Alfakit\Schemas\Components\Section;
 use AlfaSix\Alfakit\Schemas\Components\Utilities\Get;
 use AlfaSix\Alfakit\Schemas\Schema;
+use AlfaSix\Alfakit\Support\ModelKey;
 use AlfaSix\Alfakit\Tables\Columns\TextColumn;
 use AlfaSix\Alfakit\Tables\Filters\Filter;
 use AlfaSix\Alfakit\Tables\Filters\SelectFilter;
@@ -34,6 +35,7 @@ use AlfaSix\AlfakitHelpdesk\Sla\Sla;
 use AlfaSix\AlfakitHelpdesk\Support\Agents;
 use AlfaSix\AlfakitHelpdesk\Support\Attachments;
 use AlfaSix\AlfakitHelpdesk\Support\Groups;
+use AlfaSix\AlfakitHelpdesk\Support\Requesters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Throwable;
@@ -160,15 +162,15 @@ class TicketResource extends Resource
      */
     public static function searchRequesters(string $search): array
     {
-        $model = AlfakitHelpdesk::userModel(alfakit()->getCurrentOrDefaultPanel()->getAuthGuard());
+        $query = Requesters::query(static::requesterTenant());
         $search = trim($search);
 
-        if ($model === null || mb_strlen($search) < 2) {
+        if ($query === null || mb_strlen($search) < 2) {
             return [];
         }
 
         $like = '%'.mb_strtolower($search).'%';
-        $query = $model::query()->where(static function (Builder $query) use ($like): void {
+        $query->where(static function (Builder $query) use ($like): void {
             foreach (['name', 'email'] as $column) {
                 $query->orWhereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap($query->qualifyColumn($column)).') LIKE ?', [$like]);
             }
@@ -185,10 +187,28 @@ class TicketResource extends Resource
 
     public static function requesterLabel(mixed $value): ?string
     {
-        $model = AlfakitHelpdesk::userModel(alfakit()->getCurrentOrDefaultPanel()->getAuthGuard());
-        $user = $model === null || ! is_scalar($value) ? null : $model::query()->whereKey($value)->first();
+        $user = static::findRequester($value);
 
         return $user instanceof Model ? static::formatRequester($user) : null;
+    }
+
+    /**
+     * The user with this key, if agents here may pick them as a requester.
+     */
+    public static function findRequester(mixed $value): ?Model
+    {
+        $query = Requesters::query(static::requesterTenant());
+
+        if ($query === null || ! is_scalar($value) || ! ModelKey::isComparable($query->getModel(), $query->getModel()->getKeyName(), $value)) {
+            return null;
+        }
+
+        return $query->whereKey($value)->first();
+    }
+
+    protected static function requesterTenant(): ?Model
+    {
+        return static::isScopedToTenant() && alfakit()->getCurrentPanel()?->hasTenancy() ? alfakit()->getTenant() : null;
     }
 
     protected static function formatRequester(Model $user): string

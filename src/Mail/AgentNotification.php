@@ -29,8 +29,9 @@ class AgentNotification extends HelpdeskMail
     {
         return [
             'isNew' => $this->isNew,
-            'requester' => $this->ticket->getRequesterName(),
-            'body' => $this->message === null ? null : MessageBody::toPlainText($this->message->body),
+            'requester' => MessageBody::escapeMarkdown($this->ticket->getRequesterName()),
+            'subject' => MessageBody::escapeMarkdown($this->ticket->subject),
+            'body' => $this->message === null ? null : MessageBody::escapeMarkdown(MessageBody::toPlainText($this->message->body)),
             'url' => Links::forAgent($this->ticket),
         ];
     }

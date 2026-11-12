@@ -120,6 +120,9 @@ final class Tickets
 
             if ($fromRequester) {
                 self::mailAgents($ticket, new AgentNotification($ticket, $message, isNew: true));
+            } elseif ($ticket->getChannel() !== TicketChannel::Chat && $message->isPublic()) {
+                // An agent opened it on the requester's behalf: the requester gets the message and a link.
+                self::mailRequester($ticket, new AgentReplied($ticket, $message));
             }
         }
 
@@ -422,8 +425,10 @@ final class Tickets
             TicketStatus::Open => null,
         };
 
-        if ($status === TicketStatus::Open && $previous === TicketStatus::Solved) {
+        // Opening a solved or closed ticket starts its resolution clock again.
+        if ($status === TicketStatus::Open && in_array($previous, [TicketStatus::Solved, TicketStatus::Closed], true)) {
             self::reopen($ticket);
+            $ticket->closed_at = null;
         }
 
         if ($status === TicketStatus::Closed && $ticket->solved_at === null) {

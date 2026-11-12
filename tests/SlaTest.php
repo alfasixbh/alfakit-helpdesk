@@ -160,3 +160,14 @@ it('warns about breaches once and closes old solved tickets', function (): void 
     expect($solved->refresh()->getStatus())->toBe(TicketStatus::Closed)
         ->and($agent->notifications()->count())->toBe(1);
 });
+
+it('keeps business hours on the clock on the days daylight saving changes', function (): void {
+    $clock = SlaClock::business(BusinessHours::make('Europe/Berlin')->weekdays('09:00', '17:00')->days(['sat', 'sun'], '09:00', '17:00'));
+    $berlin = static fn (string $moment): CarbonImmutable => CarbonImmutable::parse($moment, 'Europe/Berlin');
+
+    // 2026-03-29: clocks go forward (a 23-hour day); 2026-10-25: back (25 hours).
+    expect($clock->addMinutes($berlin('2026-03-29 06:00'), 0)->setTimezone('Europe/Berlin')->format('Y-m-d H:i'))->toBe('2026-03-29 09:00')
+        ->and($clock->addMinutes($berlin('2026-10-25 06:00'), 0)->setTimezone('Europe/Berlin')->format('Y-m-d H:i'))->toBe('2026-10-25 09:00')
+        ->and($clock->addMinutes($berlin('2026-10-25 09:00'), 8 * 60)->setTimezone('Europe/Berlin')->format('Y-m-d H:i'))->toBe('2026-10-25 17:00')
+        ->and($clock->minutesBetween($berlin('2026-03-29 00:00'), $berlin('2026-03-30 00:00')))->toBe(480);
+});

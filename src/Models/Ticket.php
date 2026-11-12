@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
@@ -148,6 +149,17 @@ class Ticket extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(AlfakitHelpdesk::messageModel(), 'ticket_id')->orderBy('created_at')->orderBy('id');
+    }
+
+    /**
+     * The newest reply or note (events excluded), for lists.
+     */
+    public function latestMessage(): HasOne
+    {
+        return $this->hasOne(AlfakitHelpdesk::messageModel(), 'ticket_id')
+            ->ofMany(['created_at' => 'max', 'id' => 'max'], static function (Builder $query): void {
+                $query->where('kind', '!=', MessageKind::Event->value);
+            });
     }
 
     /**

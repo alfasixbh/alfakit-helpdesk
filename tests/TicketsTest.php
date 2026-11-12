@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use AlfaSix\AlfakitHelpdesk\Enums\MessageKind;
+use AlfaSix\AlfakitHelpdesk\Enums\TicketChannel;
 use AlfaSix\AlfakitHelpdesk\Enums\TicketPriority;
 use AlfaSix\AlfakitHelpdesk\Enums\TicketStatus;
 use AlfaSix\AlfakitHelpdesk\Events\ReplyAdded;
@@ -149,7 +150,7 @@ it('merges tickets of the same requester and refuses others', function (): void 
 it('does not treat a chat visitor\'s typed email as the requester of another ticket', function (): void {
     $agent = agent();
     $email = ticket(['requester_email' => 'victim@example.com', 'subject' => 'By email']);
-    $chat = ticket(['requester_email' => 'victim@example.com', 'subject' => 'Chat', 'channel' => AlfaSix\AlfakitHelpdesk\Enums\TicketChannel::Chat]);
+    $chat = ticket(['requester_email' => 'victim@example.com', 'subject' => 'Chat', 'channel' => TicketChannel::Chat]);
     $other = ticket(['requester_email' => 'victim@example.com', 'subject' => 'Second email']);
 
     // Merging would hand the conversation to whoever typed that address in the chat.
@@ -234,4 +235,40 @@ it('lists tickets with views as tabs and the reports widget', function (): void 
 
     expect($json)->toContain('Due soon')->toContain('Breached')->toContain('My open tickets');
     expect(collect(flatten($props['page']['content']))->pluck('type')->all())->toContain('StatsOverviewWidget');
+});
+
+it('starts the resolution clock again when a closed ticket is opened', function (): void {
+    $ticket = ticket();
+    Tickets::changeStatus($ticket, TicketStatus::Solved, agent());
+    Tickets::changeStatus($ticket, TicketStatus::Closed, agent());
+    Tickets::changeStatus($ticket, TicketStatus::Open, agent());
+
+    expect($ticket->refresh()->solved_at)->toBeNull()->and($ticket->closed_at)->toBeNull();
+});
+
+it('mails the requester the first message of a ticket an agent opened for them', function (): void {
+    Mail::fake();
+    $customer = customer();
+
+    Tickets::open(['subject' => 'Call back', 'channel' => TicketChannel::Agent, 'requester' => $customer], '<p>As discussed on the phone.</p>', ['author' => agent(), 'fromRequester' => false]);
+
+    Mail::assertQueued(AgentReplied::class);
+});
+
+it('keeps what a requester wrote as text in the mail to agents', function (): void {
+    expect(MessageBody::escapeMarkdown('![x](https://tracker.test/a.png) [Reset](https://evil.test) # Hi'))
+        ->toBe('\!\[x\](https://tracker.test/a.png) \[Reset\](https://evil.test) \# Hi');
+});
+
+it('renders what people typed as text in every helpdesk mail', function (): void {
+    $ticket = ticket(['subject' => '[Reset your password](https://evil.test) a < b', 'requester_email' => 'casey@example.com', 'requester_name' => 'Casey'], '<p>![x](https://tracker.test/a.png) 1 < 2</p>');
+    $message = $ticket->messages()->first();
+
+    foreach ([new TicketReceived($ticket), new TicketSolvedMail($ticket), new AgentNotification($ticket, $message, isNew: true)] as $mail) {
+        $html = $mail->render();
+
+        expect($html)->not->toContain('href="https://evil.test"')
+            ->not->toContain('src="https://tracker.test/a.png"')
+            ->toContain('a &lt; b');
+    }
 });

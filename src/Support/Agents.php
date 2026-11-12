@@ -6,6 +6,7 @@ namespace AlfaSix\AlfakitHelpdesk\Support;
 
 use AlfaSix\Alfakit\AvatarProviders\InitialsAvatarProvider;
 use AlfaSix\Alfakit\Contracts\HasTenants;
+use AlfaSix\Alfakit\Support\ModelKey;
 use AlfaSix\AlfakitHelpdesk\AlfakitHelpdesk;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -114,7 +115,14 @@ final class Agents
             return null;
         }
 
-        $agent = self::query()?->whereKey($key)->first();
+        $query = self::query();
+
+        // A posted key that can't be a user's key is no agent (not a database error).
+        if ($query === null || ! ModelKey::isComparable($query->getModel(), $query->getModel()->getKeyName(), $key)) {
+            return null;
+        }
+
+        $agent = $query->whereKey($key)->first();
 
         return $agent instanceof Model && self::isAgent($agent) ? $agent : null;
     }

@@ -1,7 +1,7 @@
 <x-mail::message>
 # {{ __('alfakit-helpdesk::helpdesk.mail.solved.heading') }}
 
-{{ __('alfakit-helpdesk::helpdesk.mail.solved.body', ['reference' => $ticket->getReference(), 'subject' => $ticket->subject]) }}
+{{ __('alfakit-helpdesk::helpdesk.mail.solved.body', ['reference' => $ticket->getReference(), 'subject' => \AlfaSix\AlfakitHelpdesk\Support\MessageBody::escapeMarkdown($ticket->subject)]) }}
 
 @if ($rateUrl)
 <x-mail::button :url="$rateUrl">

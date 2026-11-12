@@ -198,3 +198,19 @@ it('authorises the ticket channels for agents only', function (): void {
     test()->actingAs(customer());
     test()->postJson('/live-desk/_alfakit/broadcasting/auth', ['socket_id' => '1234.5678', 'channel_name' => $channel])->assertForbidden();
 });
+
+it('offers a tenant only its own members and requesters as a ticket requester', function (): void {
+    ['alpha' => $alpha, 'beta' => $beta, 'dana' => $dana, 'bob' => $bob] = helpdeskTeams();
+    $known = customer('Known Customer');
+    $stranger = customer('Stranger Customer');
+    ticket(['subject' => 'From a known customer', 'tenant' => $alpha, 'requester' => $known]);
+    ticket(['subject' => 'Another tenant', 'tenant' => $beta, 'requester' => $stranger]);
+
+    $names = AlfaSix\AlfakitHelpdesk\Support\Requesters::query($alpha)?->pluck('name')->all();
+
+    // Alpha's member and the customer who wrote to alpha; nobody of beta.
+    expect($names)->toEqualCanonicalizing(['Dana', 'Known Customer'])
+        ->and(AlfaSix\AlfakitHelpdesk\Support\Requesters::query($beta)?->pluck('name')->all())->toEqualCanonicalizing(['Bob', 'Stranger Customer'])
+        // Without a tenant (a panel without tenancy) every user can be picked.
+        ->and(AlfaSix\AlfakitHelpdesk\Support\Requesters::query()?->count())->toBe(4);
+});
