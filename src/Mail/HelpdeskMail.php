@@ -100,6 +100,7 @@ abstract class HelpdeskMail extends Mailable implements ShouldQueue
         $domain = parse_url((string) config('app.url'), PHP_URL_HOST);
         $domain = is_string($domain) && $domain !== '' ? $domain : 'localhost';
 
-        return new Headers(references: ['ticket-'.$this->ticket->getKey().'@'.$domain]);
+        // `Auto-Submitted`: auto-responders don't answer mail that says it was generated.
+        return new Headers(references: ['ticket-'.$this->ticket->getKey().'@'.$domain], text: ['Auto-Submitted' => 'auto-generated']);
     }
 }

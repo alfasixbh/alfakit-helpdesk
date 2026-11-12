@@ -105,3 +105,27 @@ it('strips quoted text from replies', function (): void {
     expect(InboundMailHandler::stripQuotedText("Thanks\n> old\nOn Tue, Bob wrote:\n> older"))->toBe('Thanks')
         ->and(InboundMailHandler::stripQuotedText('> only quoted'))->toBe('> only quoted');
 });
+
+it('files auto-replies and bounces without answering them', function (): void {
+    // A person: the ticket is confirmed by email.
+    inbound(['from' => 'dana@example.com', 'subject' => 'Help', 'text' => 'Printer'])->assertJson(['created' => true]);
+    $sent = Mail::queued(Illuminate\Mail\Mailable::class)->count() + Mail::sent(Illuminate\Mail\Mailable::class)->count();
+
+    expect($sent)->toBeGreaterThan(0);
+
+    // An out-of-office reply, a mailing list and a bounce: filed, but nothing is sent, so
+    // the auto-responder has nothing to answer.
+    inbound(['from' => 'dana@example.com', 'subject' => 'Out of office', 'text' => 'Back Monday', 'headers' => ['Auto-Submitted' => 'auto-replied']])->assertJson(['created' => true]);
+    inbound(['from' => 'news@example.com', 'subject' => 'Newsletter', 'text' => 'Hi', 'headers' => ['Precedence' => 'bulk']])->assertJson(['created' => true]);
+    inbound(['from' => 'MAILER-DAEMON@mail.example.com', 'subject' => 'Undelivered', 'text' => 'Bounce'])->assertJson(['created' => true]);
+
+    expect(Mail::queued(Illuminate\Mail\Mailable::class)->count() + Mail::sent(Illuminate\Mail\Mailable::class)->count())->toBe($sent)
+        ->and(Ticket::query()->count())->toBe(4);
+});
+
+it('marks its own emails as generated', function (): void {
+    $ticket = ticket(['requester_email' => 'dana@example.com']);
+    Tickets::reply($ticket, '<p>Answer</p>', agent());
+
+    Mail::assertQueued(AgentReplied::class, fn (AgentReplied $mail): bool => ($mail->headers()->text['Auto-Submitted'] ?? null) === 'auto-generated');
+});

@@ -37,7 +37,9 @@ class InboundMailHandler
         $ticket = $this->findTicket($message);
 
         if ($ticket !== null && $ticket->acceptsReplies()) {
-            $reply = Tickets::reply($ticket, $body, null, fromRequester: true, source: TicketChannel::Email->value);
+            // An out-of-office reply or a bounce is filed but never answered: a confirmation
+            // would be auto-answered in turn, opening tickets without end.
+            $reply = Tickets::reply($ticket, $body, null, fromRequester: true, source: TicketChannel::Email->value, notify: ! $message->autoSubmitted);
             $reply->forceFill(['message_id' => $message->messageId, 'author_name' => $message->fromName ?? $ticket->requester_name, 'author_email' => $message->fromEmail])->save();
 
             return ['ticket' => $ticket->getKey(), 'created' => false, 'duplicate' => false];
@@ -50,7 +52,7 @@ class InboundMailHandler
             'requester_email' => $message->fromEmail,
             'requester_name' => $message->fromName,
             'tenant' => $ticket->tenant ?? AlfakitHelpdesk::plugin()->getPublicTenant(request()),
-        ], $body, ['source' => TicketChannel::Email->value]);
+        ], $body, ['source' => TicketChannel::Email->value, 'notify' => ! $message->autoSubmitted]);
 
         $created->messages()->first()?->forceFill(['message_id' => $message->messageId])->save();
 

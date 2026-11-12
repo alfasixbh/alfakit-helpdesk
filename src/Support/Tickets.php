@@ -477,6 +477,12 @@ final class Tickets
             return (string) $a->requester_id === (string) $b->requester_id;
         }
 
+        // A chat visitor types their email and nobody checks it: merged with another guest
+        // ticket of "the same address", the visitor's chat would show that conversation.
+        if ($a->getChannel() === TicketChannel::Chat || $b->getChannel() === TicketChannel::Chat) {
+            return false;
+        }
+
         return $a->requester_email !== null && mb_strtolower($a->requester_email) === mb_strtolower((string) $b->requester_email);
     }
 

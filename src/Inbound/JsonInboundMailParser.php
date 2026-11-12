@@ -16,7 +16,8 @@ use Illuminate\Http\Request;
  *   "subject": "Re: [#42] Printer on fire",
  *   "text": "It works now, thanks!",
  *   "html": "<p>It works now, thanks!</p>",
- *   "message_id": "<CAF=abc@mail.example.com>"
+ *   "message_id": "<CAF=abc@mail.example.com>",
+ *   "headers": {"Auto-Submitted": "no"}
  * }
  * ```
  */
@@ -48,6 +49,8 @@ class JsonInboundMailParser implements InboundMailParser
             text: is_string($text) ? mb_substr($text, 0, $max) : null,
             html: is_string($html) ? mb_substr($html, 0, $max) : null,
             messageId: is_string($messageId) ? mb_substr($messageId, 0, 255) : null,
+            // `"headers": {"Auto-Submitted": "auto-replied"}` or `"auto_submitted": true`.
+            autoSubmitted: $request->boolean('auto_submitted') || InboundMessage::isAutoSubmitted((array) $request->input('headers', []), trim($email)),
         );
     }
 }

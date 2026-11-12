@@ -146,6 +146,22 @@ it('merges tickets of the same requester and refuses others', function (): void 
     Event::assertDispatched(TicketsMerged::class);
 });
 
+it('does not treat a chat visitor\'s typed email as the requester of another ticket', function (): void {
+    $agent = agent();
+    $email = ticket(['requester_email' => 'victim@example.com', 'subject' => 'By email']);
+    $chat = ticket(['requester_email' => 'victim@example.com', 'subject' => 'Chat', 'channel' => AlfaSix\AlfakitHelpdesk\Enums\TicketChannel::Chat]);
+    $other = ticket(['requester_email' => 'victim@example.com', 'subject' => 'Second email']);
+
+    // Merging would hand the conversation to whoever typed that address in the chat.
+    expect(fn () => Tickets::merge($email, $chat, $agent))->toThrow(ValidationException::class)
+        ->and(fn () => Tickets::merge($chat, $email, $agent))->toThrow(ValidationException::class);
+
+    // Two guest tickets that arrived by email still merge.
+    Tickets::merge($other, $email, $agent);
+
+    expect($other->refresh()->isMerged())->toBeTrue();
+});
+
 it('rates solved tickets only', function (): void {
     $ticket = ticket(['requester' => customer()]);
 
